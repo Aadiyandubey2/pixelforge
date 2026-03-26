@@ -1,63 +1,3 @@
-import axios from "axios";
-
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
-
-function normalizeBaseUrl(baseUrl?: string): string {
-  return (baseUrl ?? "").trim().replace(/\/+$/, "");
-}
-
-function isLocalHost(hostname?: string): boolean {
-  return typeof hostname === "string" && LOCAL_HOSTS.has(hostname);
-}
-
-function resolveApiBaseUrl(): string {
-  const configuredBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL);
-  if (configuredBaseUrl) {
-    return configuredBaseUrl;
-  }
-
-  if (typeof window !== "undefined" && isLocalHost(window.location.hostname)) {
-    return "http://localhost:8000";
-  }
-
-  return "";
-}
-
-function withApiBase(path: string): string {
-  return `${resolveApiBaseUrl()}${path}`;
-}
-
-function toRequestError(error: unknown): Error {
-  if (!axios.isAxiosError(error)) {
-    return error instanceof Error ? error : new Error("Request failed");
-  }
-
-  const detail =
-    typeof error.response?.data === "object" &&
-    error.response?.data !== null &&
-    "detail" in error.response.data &&
-    typeof error.response.data.detail === "string"
-      ? error.response.data.detail
-      : null;
-
-  if (
-    error.response?.status === 404 &&
-    !normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL) &&
-    typeof window !== "undefined" &&
-    !isLocalHost(window.location.hostname)
-  ) {
-    return new Error(
-      "Production API is not configured. Set NEXT_PUBLIC_API_URL to your deployed backend URL."
-    );
-  }
-
-  if (detail) {
-    return new Error(detail);
-  }
-
-  return new Error(error.message || "Request failed");
-}
-
 export interface ConvertedFile {
   id: string;
   original_name: string;
@@ -71,45 +11,165 @@ export interface ConvertResponse {
   results: ConvertedFile[];
 }
 
-export async function convertImages(
-  files: File[],
-  format: "webp" | "avif",
-  quality: number = 80
-): Promise<ConvertResponse> {
-  const formData = new FormData();
-  files.forEach((file) => formData.append("files", file));
-  formData.append("format", format);
-  formData.append("quality", String(quality));
+type OutputFormat = "webp" | "avif";
+
+interface StoredConvertedFile {
+  blob: Blob;
+  metadata: ConvertedFile;
+}
+
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+const convertedFileStore = new Map<string, StoredConvertedFile>();
+
+function ensureBrowserRuntime() {
+  if (typeof window === "undefined") {
+    throw new Error("Image conversion is only available in the browser.");
+  }
+}
+
+function createFileId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `file-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function getMimeType(format: OutputFormat): string {
+  return format === "avif" ? "image/avif" : "image/webp";
+}
+
+function buildConvertedName(filename: string, format: OutputFormat): string {
+  const extensionIndex = filename.lastIndexOf(".");
+  const stem = extensionIndex > 0 ? filename.slice(0, extensionIndex) : filename;
+  return `${stem}.${format}`;
+}
+
+async function loadImageData(file: File): Promise<ImageData> {
+  ensureBrowserRuntime();
+
+  const bitmap = await createImageBitmap(file);
 
   try {
-    const response = await axios.post<ConvertResponse>(
-      withApiBase("/api/convert"),
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
 
-    return response.data;
-  } catch (error) {
-    throw toRequestError(error);
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      throw new Error("Could not initialize the image converter.");
+    }
+
+    context.drawImage(bitmap, 0, 0);
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+  } finally {
+    bitmap.close();
   }
+}
+
+async function encodeImage(
+  imageData: ImageData,
+  format: OutputFormat,
+  quality: number
+): Promise<ArrayBuffer> {
+  if (format === "webp") {
+    const { encode } = await import("@jsquash/webp");
+    return encode(imageData, {
+      quality,
+      alpha_quality: quality,
+      method: 4,
+    });
+  }
+
+  const { encode } = await import("@jsquash/avif");
+  return encode(imageData, {
+    quality,
+    qualityAlpha: quality,
+    speed: 6,
+    lossless: quality === 100,
+  });
+}
+
+function registerConvertedFile(
+  file: File,
+  format: OutputFormat,
+  buffer: ArrayBuffer
+): ConvertedFile {
+  const blob = new Blob([buffer], { type: getMimeType(format) });
+  const id = createFileId();
+  const metadata: ConvertedFile = {
+    id,
+    original_name: file.name,
+    converted_name: buildConvertedName(file.name, format),
+    original_size: file.size,
+    converted_size: blob.size,
+    download_url: URL.createObjectURL(blob),
+  };
+
+  convertedFileStore.set(id, {
+    blob,
+    metadata,
+  });
+
+  return metadata;
+}
+
+export async function convertImages(
+  files: File[],
+  format: OutputFormat,
+  quality: number = 80
+): Promise<ConvertResponse> {
+  ensureBrowserRuntime();
+
+  const results: ConvertedFile[] = [];
+
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      throw new Error(`"${file.name}" exceeds the 50 MB limit.`);
+    }
+
+    const imageData = await loadImageData(file);
+    const encodedBuffer = await encodeImage(imageData, format, quality);
+    results.push(registerConvertedFile(file, format, encodedBuffer));
+  }
+
+  return { results };
 }
 
 export function getDownloadUrl(fileId: string): string {
-  return withApiBase(`/api/download/${fileId}`);
+  return convertedFileStore.get(fileId)?.metadata.download_url ?? "#";
 }
 
 export async function downloadAll(ids: string[]): Promise<Blob> {
-  try {
-    const response = await axios.post(
-      withApiBase("/api/download-all"),
-      { ids },
-      { responseType: "blob" }
-    );
+  const { zipSync } = await import("fflate");
+  const archiveFiles: Record<string, Uint8Array> = {};
 
-    return response.data;
-  } catch (error) {
-    throw toRequestError(error);
+  for (const id of ids) {
+    const entry = convertedFileStore.get(id);
+    if (!entry) {
+      continue;
+    }
+
+    archiveFiles[entry.metadata.converted_name] = new Uint8Array(
+      await entry.blob.arrayBuffer()
+    );
   }
+
+  if (Object.keys(archiveFiles).length === 0) {
+    throw new Error("No converted files are available to download.");
+  }
+
+  const archive = zipSync(archiveFiles, { level: 6 });
+  const archiveBuffer = new Uint8Array(archive).buffer;
+  return new Blob([archiveBuffer], { type: "application/zip" });
+}
+
+export function releaseConvertedFile(fileId: string) {
+  const entry = convertedFileStore.get(fileId);
+  if (!entry) {
+    return;
+  }
+
+  URL.revokeObjectURL(entry.metadata.download_url);
+  convertedFileStore.delete(fileId);
 }

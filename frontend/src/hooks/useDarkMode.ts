@@ -3,15 +3,17 @@
 import { useState, useEffect } from "react";
 
 export function useDarkMode() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return localStorage.getItem("pixelforge-dark-mode") === "true";
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem("pixelforge-dark-mode");
-    if (stored === "true") {
-      setIsDark(true);
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   const toggleDark = () => {
     setIsDark((prev) => {

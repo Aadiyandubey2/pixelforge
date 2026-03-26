@@ -3,7 +3,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CloudArrowUp,
-  Image as ImageIcon,
   DownloadSimple,
   Trash,
   CheckCircle,
@@ -15,6 +14,7 @@ import {
   convertImages,
   getDownloadUrl,
   downloadAll,
+  releaseConvertedFile,
   type ConvertedFile,
 } from "../lib/api";
 
@@ -36,19 +36,26 @@ export default function ConverterTool() {
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const newImages: UploadedImage[] = Array.from(files)
-      .filter((f) => /\.(png|jpe?g|bmp|gif|tiff?|webp)$/i.test(f.name))
+      .filter((file) => /\.(png|jpe?g|bmp|gif|tiff?|webp)$/i.test(file.name))
       .map((file) => ({
         file,
         preview: URL.createObjectURL(file),
         status: "pending" as const,
       }));
+
     setImages((prev) => [...prev, ...newImages]);
   }, []);
 
   const removeImage = useCallback((index: number) => {
     setImages((prev) => {
       const copy = [...prev];
-      URL.revokeObjectURL(copy[index].preview);
+      const image = copy[index];
+
+      if (image.result) {
+        releaseConvertedFile(image.result.id);
+      }
+
+      URL.revokeObjectURL(image.preview);
       copy.splice(index, 1);
       return copy;
     });
@@ -75,6 +82,7 @@ export default function ConverterTool() {
       setImages((prev) => {
         const copy = [...prev];
         let resultIdx = 0;
+
         for (let i = 0; i < copy.length; i++) {
           if (
             copy[i].status === "converting" &&
@@ -84,15 +92,18 @@ export default function ConverterTool() {
               ...copy[i],
               status: "done",
               result: response.results[resultIdx],
+              error: undefined,
             };
             resultIdx++;
           }
         }
+
         return copy;
       });
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Conversion failed";
+
       setImages((prev) =>
         prev.map((img) =>
           img.status === "converting"
@@ -100,9 +111,9 @@ export default function ConverterTool() {
             : img
         )
       );
+    } finally {
+      setIsConverting(false);
     }
-
-    setIsConverting(false);
   };
 
   const handleDownloadAll = async () => {
@@ -126,7 +137,14 @@ export default function ConverterTool() {
   };
 
   const clearAll = () => {
-    images.forEach((img) => URL.revokeObjectURL(img.preview));
+    images.forEach((img) => {
+      if (img.result) {
+        releaseConvertedFile(img.result.id);
+      }
+
+      URL.revokeObjectURL(img.preview);
+    });
+
     setImages([]);
   };
 
@@ -140,10 +158,7 @@ export default function ConverterTool() {
   const pendingCount = images.filter((img) => img.status === "pending").length;
 
   return (
-    <section
-      id="convert"
-      className="relative py-16 sm:py-24 md:py-32"
-    >
+    <section id="convert" className="relative py-16 sm:py-24 md:py-32">
       <div
         className="absolute top-0 left-0 right-0 h-px"
         style={{
@@ -153,7 +168,6 @@ export default function ConverterTool() {
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* Header */}
         <motion.div
           className="text-center mb-8 sm:mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -171,18 +185,14 @@ export default function ConverterTool() {
           </h2>
         </motion.div>
 
-        {/* Tool Card */}
         <motion.div
           className="glass-card p-4 sm:p-6 md:p-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          {/* Controls Row */}
           <div className="flex flex-col gap-4 mb-4 sm:mb-6">
-            {/* Top row: format + quality */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              {/* Format toggle */}
               <div
                 className="flex rounded-xl p-1 shrink-0"
                 style={{
@@ -210,7 +220,6 @@ export default function ConverterTool() {
                 ))}
               </div>
 
-              {/* Quality slider */}
               <div className="flex items-center gap-3 flex-1">
                 <span
                   className="text-xs sm:text-sm font-medium whitespace-nowrap"
@@ -227,15 +236,12 @@ export default function ConverterTool() {
                   className="flex-1 h-2"
                   style={{ accentColor: "#0D9488", maxWidth: 200 }}
                 />
-                <span
-                  className="text-xs sm:text-sm font-bold w-8 sm:w-10 text-right gradient-text"
-                >
+                <span className="text-xs sm:text-sm font-bold w-8 sm:w-10 text-right gradient-text">
                   {quality}
                 </span>
               </div>
             </div>
 
-            {/* Actions row */}
             <div className="flex flex-wrap gap-2">
               {pendingCount > 0 && (
                 <motion.button
@@ -250,7 +256,7 @@ export default function ConverterTool() {
                   whileTap={{ scale: 0.97 }}
                 >
                   {isConverting
-                    ? "Converting…"
+                    ? "Converting..."
                     : `Convert ${pendingCount} file${pendingCount > 1 ? "s" : ""}`}
                 </motion.button>
               )}
@@ -286,7 +292,6 @@ export default function ConverterTool() {
             </div>
           </div>
 
-          {/* Drop Zone */}
           {images.length === 0 && (
             <motion.div
               className="relative rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300"
@@ -340,15 +345,13 @@ export default function ConverterTool() {
                 className="text-xs sm:text-sm"
                 style={{ color: "var(--text-tertiary)" }}
               >
-                PNG, JPG, GIF, BMP, TIFF — up to 50 MB each
+                PNG, JPG, GIF, BMP, TIFF - processed locally in your browser
               </p>
             </motion.div>
           )}
 
-          {/* Image Grid */}
           {images.length > 0 && (
             <div>
-              {/* Small drop zone */}
               <div
                 className="rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 flex items-center gap-3 cursor-pointer transition-all"
                 style={{
@@ -390,7 +393,6 @@ export default function ConverterTool() {
                 </span>
               </div>
 
-              {/* Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <AnimatePresence mode="popLayout">
                   {images.map((img, index) => (
@@ -408,7 +410,6 @@ export default function ConverterTool() {
                         boxShadow: "var(--shadow-card)",
                       }}
                     >
-                      {/* Thumbnail */}
                       <div
                         className="relative h-28 sm:h-36 overflow-hidden"
                         style={{ background: "var(--bg-card-alt)" }}
@@ -449,7 +450,6 @@ export default function ConverterTool() {
                         </button>
                       </div>
 
-                      {/* Info */}
                       <div className="p-2.5 sm:p-3">
                         <p
                           className="text-xs sm:text-sm font-medium truncate mb-1"
@@ -457,7 +457,7 @@ export default function ConverterTool() {
                         >
                           {img.file.name}
                         </p>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <p
                             className="text-[10px] sm:text-xs"
                             style={{ color: "var(--text-tertiary)" }}
@@ -465,7 +465,7 @@ export default function ConverterTool() {
                             {formatFileSize(img.file.size)}
                             {img.result && (
                               <>
-                                {" → "}
+                                {" -> "}
                                 {formatFileSize(img.result.converted_size)}
                                 <span style={{ color: "#22C55E" }}>
                                   {" "}
@@ -492,8 +492,11 @@ export default function ConverterTool() {
                             </a>
                           )}
                           {img.status === "error" && (
-                            <span className="text-[10px] sm:text-xs text-red-500">
-                              Error
+                            <span
+                              className="text-[10px] sm:text-xs text-red-500 max-w-28 truncate"
+                              title={img.error}
+                            >
+                              {img.error || "Error"}
                             </span>
                           )}
                         </div>

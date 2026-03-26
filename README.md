@@ -1,6 +1,6 @@
 # PixelForge
 
-PixelForge is a full-stack image conversion website for converting common image formats into WebP and AVIF.
+PixelForge is a browser-first image conversion website for converting common image formats into WebP and AVIF.
 
 ## Features
 
@@ -8,17 +8,18 @@ PixelForge is a full-stack image conversion website for converting common image 
 - Upload multiple files in one session
 - Adjust output quality before conversion
 - Modern frontend built with Next.js
-- Fast backend API powered by FastAPI
+- Client-side conversion that works on a static deployment
 
 ## Tech Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
-- Backend: FastAPI, Pillow, pillow-avif-plugin
+- Frontend conversion: WebAssembly codecs via jSquash
+- Optional backend: FastAPI, Pillow, pillow-avif-plugin
 
 ## Project Structure
 
 - `frontend/` contains the Next.js website
-- `backend/` contains the FastAPI conversion API
+- `backend/` contains the optional FastAPI conversion API
 
 ## Local Development
 
@@ -30,7 +31,7 @@ npm install
 npm run dev
 ```
 
-### Backend
+### Optional Backend
 
 ```bash
 cd backend
@@ -40,16 +41,8 @@ uvicorn main:app --reload
 
 ## Production Deployment
 
-- Deploy the repository root to Vercel. The root `vercel.json` builds the static frontend from `frontend/`.
-- Deploy the FastAPI backend from `backend/` to a Python host such as Render, Railway, Fly.io, or another VM/container platform.
-- Keep the backend off Vercel Functions for the current 50 MB upload target.
-- Set `NEXT_PUBLIC_API_URL` in your frontend deployment to the public backend origin.
-- Set `ALLOWED_ORIGINS` in the backend deployment to your frontend domain.
-
-Example values:
-
-- Frontend `NEXT_PUBLIC_API_URL=https://api.yourdomain.com`
-- Backend `ALLOWED_ORIGINS=https://yourdomain.com`
+- Deploy the repository root to Vercel. The frontend now converts images directly in the browser, so a live backend is not required for the core experience.
+- Keep the FastAPI backend only if you want a separate API for future integrations or larger server-side workflows.
 
 ## Author
 

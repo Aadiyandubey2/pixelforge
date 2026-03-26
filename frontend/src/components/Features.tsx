@@ -12,17 +12,51 @@ import {
 import AnimatedColorIcon from "./AnimatedColorIcon";
 
 const features = [
-  { icon: Lightning, title: "Blazing Fast", description: "Server-side conversion with optimized Pillow pipeline. Results in seconds, not minutes." },
-  { icon: ShieldCheck, title: "Privacy First", description: "Files are auto-deleted after conversion. Nothing stored, nothing tracked." },
-  { icon: Files, title: "Batch Convert", description: "Upload multiple files at once and convert them all in a single click." },
-  { icon: Gauge, title: "Quality Control", description: "Fine-tune compression with our quality slider. Find the perfect size-to-quality ratio." },
-  { icon: PaintBrush, title: "Format Choice", description: "Choose between WebP for broad compatibility or AVIF for maximum compression." },
-  { icon: CloudArrowDown, title: "ZIP Download", description: "Download all converted files as a single ZIP archive. One click, all files." },
+  {
+    icon: Lightning,
+    title: "Blazing Fast",
+    description:
+      "In-browser conversion powered by WebAssembly codecs. Results in seconds, without a network round trip.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privacy First",
+    description:
+      "Your images stay on your device during conversion. Nothing is uploaded to a backend.",
+  },
+  {
+    icon: Files,
+    title: "Batch Convert",
+    description:
+      "Upload multiple files at once and convert them all in a single click.",
+  },
+  {
+    icon: Gauge,
+    title: "Quality Control",
+    description:
+      "Fine-tune compression with our quality slider. Find the perfect size-to-quality ratio.",
+  },
+  {
+    icon: PaintBrush,
+    title: "Format Choice",
+    description:
+      "Choose between WebP for broad compatibility or AVIF for maximum compression.",
+  },
+  {
+    icon: CloudArrowDown,
+    title: "ZIP Download",
+    description:
+      "Download all converted files as a single ZIP archive. One click, all files.",
+  },
 ];
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.1 } }),
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, delay: i * 0.1 },
+  }),
 };
 
 export default function Features() {
@@ -35,12 +69,21 @@ export default function Features() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2 sm:mb-3 gradient-text">Features</p>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4" style={{ color: "var(--foreground)" }}>
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2 sm:mb-3 gradient-text">
+            Features
+          </p>
+          <h2
+            className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4"
+            style={{ color: "var(--foreground)" }}
+          >
             Everything you <span className="gradient-text">need</span>
           </h2>
-          <p className="text-sm sm:text-lg max-w-2xl mx-auto px-2" style={{ color: "var(--text-secondary)" }}>
-            A powerful, privacy-focused image converter with all the features you&apos;d expect from a premium tool — for free.
+          <p
+            className="text-sm sm:text-lg max-w-2xl mx-auto px-2"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            A powerful, privacy-focused image converter with all the features
+            you&apos;d expect from a premium tool - for free.
           </p>
         </motion.div>
 
@@ -62,10 +105,16 @@ export default function Features() {
               >
                 <AnimatedColorIcon icon={feature.icon} colorIndex={i} size={28} />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2" style={{ color: "var(--foreground)" }}>
+              <h3
+                className="text-base sm:text-lg font-semibold mb-1.5 sm:mb-2"
+                style={{ color: "var(--foreground)" }}
+              >
                 {feature.title}
               </h3>
-              <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              <p
+                className="text-xs sm:text-sm leading-relaxed"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 {feature.description}
               </p>
             </motion.div>
