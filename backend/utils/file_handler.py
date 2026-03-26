@@ -1,9 +1,9 @@
 import os
 import time
-import shutil
 from pathlib import Path
 
-TEMP_DIR = Path(os.getenv("TEMP_DIR", "./tmp"))
+DEFAULT_TEMP_DIR = Path(__file__).resolve().parents[1] / "tmp"
+TEMP_DIR = Path(os.getenv("TEMP_DIR", str(DEFAULT_TEMP_DIR))).resolve()
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif"}
 MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE_MB", 50)) * 1024 * 1024  # bytes

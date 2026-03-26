@@ -21,6 +21,8 @@ backend/tmp/
 backend/.env
 frontend/.env.local
 frontend/.env*
+!backend/.env.example
+!frontend/.env.example
 
 # Editor and OS files
 .vscode/
