@@ -1,0 +1,22 @@
+{
+  "name": "PixelForge",
+  "short_name": "PixelForge",
+  "description": "Free browser-based WebP and AVIF image converter.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#c6f6d5",
+  "theme_color": "#0D9488",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "640x640",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

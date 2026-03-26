@@ -10,7 +10,6 @@ import {
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20 pb-12">
-      {/* Soft blobs for extra depth (light only) */}
       <div
         className="absolute top-[10%] left-[5%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full blur-[120px] animate-pulse-glow dark:hidden"
         style={{ background: "rgba(6,182,212,0.2)", animationDelay: "0s" }}
@@ -20,14 +19,12 @@ export default function Hero() {
         style={{ background: "rgba(252,165,165,0.15)", animationDelay: "2s" }}
       />
 
-      {/* Dark mode: subtle radial glow behind content */}
       <div
         className="hidden dark:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px] opacity-30"
         style={{ background: "radial-gradient(circle, rgba(45,212,191,0.3), transparent 70%)" }}
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-16">
-        {/* Text */}
         <motion.div
           className="flex-1 text-center lg:text-left"
           initial={{ opacity: 0, y: 30 }}
@@ -48,7 +45,7 @@ export default function Hero() {
             transition={{ delay: 0.2 }}
           >
             <span className="w-2 h-2 rounded-full" style={{ background: "#22C55E" }} />
-            Free & Unlimited Image Conversion
+            Free Online WebP and AVIF Converter
           </motion.div>
 
           <h1
@@ -57,7 +54,7 @@ export default function Hero() {
           >
             Convert images
             <br />
-            to <span className="gradient-text">WebP</span> &{" "}
+            to <span className="gradient-text">WebP</span> and{" "}
             <span className="gradient-text">AVIF</span>
           </h1>
 
@@ -65,8 +62,8 @@ export default function Hero() {
             className="text-base sm:text-lg md:text-xl max-w-xl mx-auto lg:mx-0 mb-6 sm:mb-8 leading-relaxed"
             style={{ color: "var(--text-secondary)" }}
           >
-            Drop your PNG, JPG, GIF, BMP, or TIFF files and get optimized
-            next-gen formats in seconds. Blazing fast. Stunning quality.
+            Convert PNG to WebP, JPG to AVIF, GIF, BMP, TIFF, and WebP files
+            online with fast, private, browser-based image optimization.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
@@ -102,7 +99,6 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        {/* Floating Converter Mock */}
         <motion.div
           className="flex-1 max-w-md w-full"
           initial={{ opacity: 0, y: 40 }}
@@ -122,7 +118,7 @@ export default function Hero() {
                   Image Converter
                 </p>
                 <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  Drag & drop to convert
+                  Drag and drop to convert
                 </p>
               </div>
             </div>
@@ -151,9 +147,11 @@ export default function Hero() {
                     <ImageIcon size={18} weight="duotone" color="var(--accent-primary)" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium truncate" style={{ color: "var(--foreground)" }}>{item.name}</p>
+                    <p className="text-xs sm:text-sm font-medium truncate" style={{ color: "var(--foreground)" }}>
+                      {item.name}
+                    </p>
                     <p className="text-[10px] sm:text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      {item.size} → {item.converted} <span style={{ color: "#22C55E" }}>(-{item.pct}%)</span>
+                      {item.size} -&gt; {item.converted} <span style={{ color: "#22C55E" }}>(-{item.pct}%)</span>
                     </p>
                   </div>
                   <span

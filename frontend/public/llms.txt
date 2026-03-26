@@ -1,0 +1,35 @@
+# PixelForge
+
+> PixelForge is a free browser-based image converter for WebP and AVIF.
+
+## Canonical URL
+
+- https://pixelforge.aadiyandubey.me/
+
+## Primary Topics
+
+- online image converter
+- WebP converter
+- AVIF converter
+- PNG to WebP
+- JPG to AVIF
+- image compression
+- batch image conversion
+
+## Key Resources
+
+- [Home](https://pixelforge.aadiyandubey.me/): main landing page and converter
+- [LLM Full Summary](https://pixelforge.aadiyandubey.me/llms-full.txt): plain text overview for AI systems
+- [Sitemap](https://pixelforge.aadiyandubey.me/sitemap.xml): crawlable URL list
+
+## Summary
+
+- Converts PNG, JPG, JPEG, GIF, BMP, TIFF, and WebP to WebP or AVIF
+- Runs the main conversion flow in the browser
+- Supports batch conversion and ZIP downloads
+- Free to use with no signup required
+
+## Publisher
+
+- PixelForge
+- Author: Aadiyan Dubey

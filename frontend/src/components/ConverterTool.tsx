@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
   CloudArrowUp,
   DownloadSimple,
@@ -414,10 +415,13 @@ export default function ConverterTool() {
                         className="relative h-28 sm:h-36 overflow-hidden"
                         style={{ background: "var(--bg-card-alt)" }}
                       >
-                        <img
+                        <Image
                           src={img.preview}
                           alt={img.file.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          unoptimized
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover"
                         />
                         {img.status === "converting" && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">

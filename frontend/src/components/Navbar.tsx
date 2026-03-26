@@ -5,6 +5,9 @@ import { Moon, Sun, List, X } from "@phosphor-icons/react";
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+
+const navItems = ["Features", "How It Works", "Convert", "FAQ"];
 
 export default function Navbar() {
   const { isDark, toggleDark } = useDarkMode();
@@ -24,11 +27,10 @@ export default function Navbar() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-2 sm:gap-2.5 no-underline">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 no-underline">
           <Image
             src="/logo.png"
-            alt="PixelForge"
+            alt="PixelForge logo"
             width={32}
             height={32}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain"
@@ -39,11 +41,10 @@ export default function Navbar() {
           >
             Pixel<span className="gradient-text">Forge</span>
           </span>
-        </a>
+        </Link>
 
-        {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-8">
-          {["Features", "How It Works", "Convert"].map((item) => (
+          {navItems.map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
@@ -61,7 +62,6 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Right side */}
         <div className="flex items-center gap-2">
           <button
             onClick={toggleDark}
@@ -97,7 +97,7 @@ export default function Navbar() {
           animate={{ opacity: 1, y: 0 }}
           className="md:hidden px-4 pb-4 flex flex-col gap-1"
         >
-          {["Features", "How It Works", "Convert"].map((item) => (
+          {navItems.map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
