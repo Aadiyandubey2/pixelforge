@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ── Light Mode ── */
+:root {
+  --background: transparent;
+  --bg-card: rgba(255, 255, 255, 0.45);
+  --bg-card-alt: rgba(255, 255, 255, 0.3);
+
+  --foreground: #0F172A;
+  --text-secondary: #334155;
+  --text-tertiary: #94A3B8;
+
+  --accent-primary: #0D9488;
+  --accent-secondary: #06B6D4;
+  --accent-emerald: #10B981;
+
+  --gradient-button: linear-gradient(135deg, #0D9488, #06B6D4, #10B981);
+  --gradient-text: linear-gradient(135deg, #0D9488, #0891B2, #059669);
+  --gradient-subtle: rgba(13, 148, 136, 0.08);
+
+  --shadow-card: 0 4px 30px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 12px 40px rgba(13, 148, 136, 0.12);
+  --shadow-button: 0 4px 20px rgba(13, 148, 136, 0.25);
+
+  --border-light: rgba(255, 255, 255, 0.5);
+  --border-card: rgba(13, 148, 136, 0.2);
+
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: 20px;
+}
+
+/* ── Dark Mode — same mesh, deeper colors ── */
+.dark {
+  --background: transparent;
+  --bg-card: rgba(10, 10, 15, 0.55);
+  --bg-card-alt: rgba(10, 10, 15, 0.4);
+
+  --foreground: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+
+  --accent-primary: #2DD4BF;
+  --accent-secondary: #22D3EE;
+  --accent-emerald: #34D399;
+
+  --gradient-button: linear-gradient(135deg, #2DD4BF, #22D3EE, #34D399);
+  --gradient-text: linear-gradient(135deg, #5EEAD4, #67E8F9, #6EE7B7);
+  --gradient-subtle: rgba(45, 212, 191, 0.1);
+
+  --shadow-card: 0 4px 30px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 12px 40px rgba(45, 212, 191, 0.12);
+  --shadow-button: 0 4px 20px rgba(45, 212, 191, 0.3);
+
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-card: rgba(45, 212, 191, 0.2);
+
+  --glass-bg: rgba(10, 10, 15, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 20px;
+}
+
+/* ── Base ── */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition: color 0.3s ease;
+}
+
+/* ── Full-page mesh gradient (light mode) ── */
+#page-wrapper {
+  position: relative;
+  min-height: 100vh;
+  background: #c6f6d5;
+}
+
+/* Vivid colored blobs that create the mesh effect */
+#page-wrapper::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(103,232,249,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(110,231,183,0.7) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(252,211,77,0.5) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 85% 60%, rgba(252,165,165,0.7) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 20% 80%, rgba(167,243,208,0.8) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 60% 90%, rgba(125,211,252,0.6) 0%, transparent 50%);
+}
+
+#page-wrapper > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dark mode: same mesh but deeper, richer tones */
+.dark #page-wrapper {
+  background: #1a1a2e;
+}
+
+.dark #page-wrapper::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(8,145,178,0.6) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(5,150,105,0.5) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(180,130,20,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 85% 60%, rgba(190,80,80,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 20% 80%, rgba(16,185,129,0.5) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 60% 90%, rgba(14,116,144,0.45) 0%, transparent 50%);
+}
+
+/* Dark mode: cards get subtle teal border glow on hover */
+.dark .glass-card:hover {
+  border-color: rgba(45, 212, 191, 0.2);
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.06), var(--shadow-card);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
+
+/* ── Typography ── */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.font-body {
+  font-family: var(--font-body);
+  letter-spacing: 0.01em;
+}
+
+.gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass Cards ── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* ── Animations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
