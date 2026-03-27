@@ -11,7 +11,7 @@ export interface ConvertResponse {
   results: ConvertedFile[];
 }
 
-type OutputFormat = "webp" | "avif";
+export type OutputFormat = "webp" | "avif";
 
 interface StoredConvertedFile {
   blob: Blob;

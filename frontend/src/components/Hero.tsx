@@ -3,11 +3,158 @@
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Image as ImageIcon,
+  CheckCircle,
+  CircleNotch,
   CloudArrowUp,
+  Files,
+  Image as ImageIcon,
+  ShieldCheck,
+  SlidersHorizontal,
+  WarningCircle,
 } from "@phosphor-icons/react";
+import {
+  SUPPORTED_INPUT_FORMATS,
+  type UseImageConverterResult,
+} from "../hooks/useImageConverter";
 
-export default function Hero() {
+interface HeroProps {
+  converter: UseImageConverterResult;
+}
+
+const badgeStyles = {
+  neutral: {
+    background: "rgba(13,148,136,0.10)",
+    color: "var(--accent-primary)",
+  },
+  success: {
+    background: "rgba(34,197,94,0.12)",
+    color: "#22C55E",
+  },
+  warning: {
+    background: "rgba(245,158,11,0.12)",
+    color: "#D97706",
+  },
+  danger: {
+    background: "rgba(239,68,68,0.12)",
+    color: "#EF4444",
+  },
+} as const;
+
+function getSavingsPercentage(originalSize: number, convertedSize: number) {
+  return Math.max(0, Math.round((1 - convertedSize / originalSize) * 100));
+}
+
+export default function Hero({ converter }: HeroProps) {
+  const {
+    images,
+    format,
+    quality,
+    isConverting,
+    doneCount,
+    formatFileSize,
+  } = converter;
+
+  const visibleImages = images.slice(0, 3);
+  const remainingImages = Math.max(images.length - visibleImages.length, 0);
+  const previewRows =
+    visibleImages.length > 0
+      ? visibleImages.map((item) => {
+          if (item.status === "done" && item.result) {
+            return {
+              key: item.id,
+              title: item.file.name,
+              detail: `${formatFileSize(item.result.original_size)} -> ${formatFileSize(item.result.converted_size)} (-${getSavingsPercentage(item.result.original_size, item.result.converted_size)}%)`,
+              badge: "Done",
+              tone: "success" as const,
+              icon: <CheckCircle size={18} weight="fill" color="#22C55E" />,
+            };
+          }
+
+          if (item.status === "converting") {
+            return {
+              key: item.id,
+              title: item.file.name,
+              detail: `${formatFileSize(item.file.size)} -> encoding ${format.toUpperCase()}`,
+              badge: "Working",
+              tone: "warning" as const,
+              icon: (
+                <CircleNotch
+                  size={18}
+                  weight="bold"
+                  color="#D97706"
+                  className="animate-spin"
+                />
+              ),
+            };
+          }
+
+          if (item.status === "error") {
+            return {
+              key: item.id,
+              title: item.file.name,
+              detail: item.error || "Conversion failed",
+              badge: "Issue",
+              tone: "danger" as const,
+              icon: <WarningCircle size={18} weight="fill" color="#EF4444" />,
+            };
+          }
+
+          return {
+            key: item.id,
+            title: item.file.name,
+            detail: `${formatFileSize(item.file.size)} -> ready for ${format.toUpperCase()}`,
+            badge: "Queued",
+            tone: "neutral" as const,
+            icon: (
+              <ImageIcon
+                size={18}
+                weight="duotone"
+                color="var(--accent-primary)"
+              />
+            ),
+          };
+        })
+      : [
+          {
+            key: "format",
+            title: "Output format",
+            detail: `${format.toUpperCase()} at quality ${quality}/100`,
+            badge: "Ready",
+            tone: "neutral" as const,
+            icon: (
+              <SlidersHorizontal
+                size={18}
+                weight="duotone"
+                color="var(--accent-primary)"
+              />
+            ),
+          },
+          {
+            key: "inputs",
+            title: "Accepted files",
+            detail: SUPPORTED_INPUT_FORMATS.join(", "),
+            badge: `${SUPPORTED_INPUT_FORMATS.length} types`,
+            tone: "neutral" as const,
+            icon: (
+              <Files
+                size={18}
+                weight="duotone"
+                color="var(--accent-primary)"
+              />
+            ),
+          },
+          {
+            key: "privacy",
+            title: "Privacy mode",
+            detail: "Conversion stays in your browser on this device",
+            badge: "Local",
+            tone: "success" as const,
+            icon: (
+              <ShieldCheck size={18} weight="duotone" color="#22C55E" />
+            ),
+          },
+        ];
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16 sm:pt-20 pb-12">
       <div
@@ -105,32 +252,53 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          <div className="glass-card p-5 sm:p-8 animate-float" style={{ animationDuration: "8s" }}>
-            <div className="flex items-center gap-3 mb-4 sm:mb-6">
-              <div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
-                style={{ background: "var(--gradient-button)" }}
+          <div
+            className="glass-card p-5 sm:p-8 animate-float"
+            style={{ animationDuration: "8s" }}
+          >
+            <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                  style={{ background: "var(--gradient-button)" }}
+                >
+                  <CloudArrowUp size={24} weight="duotone" color="#fff" />
+                </div>
+                <div>
+                  <p
+                    className="font-semibold text-sm"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    Image Converter
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {images.length > 0
+                      ? `${images.length} live file${images.length > 1 ? "s" : ""} in queue`
+                      : "Live settings from the converter below"}
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className="hidden sm:inline-flex text-[10px] font-medium px-2.5 py-1 rounded-full"
+                style={{
+                  background: isConverting
+                    ? "rgba(245,158,11,0.12)"
+                    : "rgba(34,197,94,0.12)",
+                  color: isConverting ? "#D97706" : "#22C55E",
+                }}
               >
-                <CloudArrowUp size={24} weight="duotone" color="#fff" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm" style={{ color: "var(--foreground)" }}>
-                  Image Converter
-                </p>
-                <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                  Drag and drop to convert
-                </p>
-              </div>
+                {images.length > 0 ? `${doneCount}/${images.length} done` : "Real data"}
+              </span>
             </div>
 
             <div className="space-y-2.5 sm:space-y-3">
-              {[
-                { name: "hero-banner.png", size: "2.4 MB", converted: "420 KB", pct: 82 },
-                { name: "product-shot.jpg", size: "1.8 MB", converted: "310 KB", pct: 83 },
-                { name: "thumbnail.bmp", size: "5.1 MB", converted: "180 KB", pct: 96 },
-              ].map((item, i) => (
+              {previewRows.map((item, i) => (
                 <motion.div
-                  key={item.name}
+                  key={item.key}
                   className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl"
                   style={{
                     background: "var(--bg-card-alt)",
@@ -144,25 +312,41 @@ export default function Hero() {
                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: "var(--gradient-subtle)" }}
                   >
-                    <ImageIcon size={18} weight="duotone" color="var(--accent-primary)" />
+                    {item.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium truncate" style={{ color: "var(--foreground)" }}>
-                      {item.name}
+                    <p
+                      className="text-xs sm:text-sm font-medium truncate"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {item.title}
                     </p>
-                    <p className="text-[10px] sm:text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      {item.size} -&gt; {item.converted} <span style={{ color: "#22C55E" }}>(-{item.pct}%)</span>
+                    <p
+                      className="text-[10px] sm:text-xs truncate"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      {item.detail}
                     </p>
                   </div>
                   <span
-                    className="text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md"
-                    style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}
+                    className="text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:py-1 rounded-md shrink-0"
+                    style={badgeStyles[item.tone]}
                   >
-                    Done
+                    {item.badge}
                   </span>
                 </motion.div>
               ))}
             </div>
+
+            {remainingImages > 0 && (
+              <div
+                className="mt-3 text-[10px] sm:text-xs text-center"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                +{remainingImages} more file{remainingImages > 1 ? "s" : ""} in
+                the live queue
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

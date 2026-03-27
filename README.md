@@ -7,6 +7,7 @@ PixelForge is a browser-first image conversion website for converting common ima
 - Convert images to WebP and AVIF
 - Upload multiple files in one session
 - Adjust output quality before conversion
+- Live hero preview that reflects the real converter queue and settings
 - Modern frontend built with Next.js
 - Client-side conversion that works on a static deployment
 
@@ -20,6 +21,12 @@ PixelForge is a browser-first image conversion website for converting common ima
 
 - `frontend/` contains the Next.js website
 - `backend/` contains the optional FastAPI conversion API
+
+## Frontend Notes
+
+- The homepage hero and the main converter now share one client-side conversion state.
+- Uploaded files, conversion progress, and completed size savings are reflected in the hero preview instead of mock placeholder data.
+- Conversion still runs locally in the browser through WebAssembly codecs, so no backend is required for the main flow.
 
 ## Local Development
 

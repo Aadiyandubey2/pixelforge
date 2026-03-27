@@ -1,162 +1,46 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import {
-  CloudArrowUp,
-  DownloadSimple,
-  Trash,
   CheckCircle,
   CircleNotch,
+  CloudArrowUp,
+  DownloadSimple,
   FileZip,
+  Trash,
 } from "@phosphor-icons/react";
-import { useState, useCallback, useRef } from "react";
+import { getDownloadUrl } from "../lib/api";
 import {
-  convertImages,
-  getDownloadUrl,
-  downloadAll,
-  releaseConvertedFile,
-  type ConvertedFile,
-} from "../lib/api";
+  ACCEPTED_IMAGE_TYPES,
+  SUPPORTED_INPUT_FORMATS,
+  type UseImageConverterResult,
+} from "../hooks/useImageConverter";
 
-interface UploadedImage {
-  file: File;
-  preview: string;
-  status: "pending" | "converting" | "done" | "error";
-  result?: ConvertedFile;
-  error?: string;
+interface ConverterToolProps {
+  converter: UseImageConverterResult;
 }
 
-export default function ConverterTool() {
-  const [images, setImages] = useState<UploadedImage[]>([]);
-  const [format, setFormat] = useState<"webp" | "avif">("webp");
-  const [quality, setQuality] = useState(80);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const addFiles = useCallback((files: FileList | File[]) => {
-    const newImages: UploadedImage[] = Array.from(files)
-      .filter((file) => /\.(png|jpe?g|bmp|gif|tiff?|webp)$/i.test(file.name))
-      .map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        status: "pending" as const,
-      }));
-
-    setImages((prev) => [...prev, ...newImages]);
-  }, []);
-
-  const removeImage = useCallback((index: number) => {
-    setImages((prev) => {
-      const copy = [...prev];
-      const image = copy[index];
-
-      if (image.result) {
-        releaseConvertedFile(image.result.id);
-      }
-
-      URL.revokeObjectURL(image.preview);
-      copy.splice(index, 1);
-      return copy;
-    });
-  }, []);
-
-  const handleConvert = async () => {
-    const pending = images.filter((img) => img.status === "pending");
-    if (pending.length === 0) return;
-
-    setIsConverting(true);
-    setImages((prev) =>
-      prev.map((img) =>
-        img.status === "pending" ? { ...img, status: "converting" } : img
-      )
-    );
-
-    try {
-      const response = await convertImages(
-        pending.map((img) => img.file),
-        format,
-        quality
-      );
-
-      setImages((prev) => {
-        const copy = [...prev];
-        let resultIdx = 0;
-
-        for (let i = 0; i < copy.length; i++) {
-          if (
-            copy[i].status === "converting" &&
-            resultIdx < response.results.length
-          ) {
-            copy[i] = {
-              ...copy[i],
-              status: "done",
-              result: response.results[resultIdx],
-              error: undefined,
-            };
-            resultIdx++;
-          }
-        }
-
-        return copy;
-      });
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Conversion failed";
-
-      setImages((prev) =>
-        prev.map((img) =>
-          img.status === "converting"
-            ? { ...img, status: "error", error: errorMessage }
-            : img
-        )
-      );
-    } finally {
-      setIsConverting(false);
-    }
-  };
-
-  const handleDownloadAll = async () => {
-    const doneIds = images
-      .filter((img) => img.status === "done" && img.result)
-      .map((img) => img.result!.id);
-
-    if (doneIds.length === 0) return;
-
-    try {
-      const blob = await downloadAll(doneIds);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "converted_images.zip";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      // Ignore download errors
-    }
-  };
-
-  const clearAll = () => {
-    images.forEach((img) => {
-      if (img.result) {
-        releaseConvertedFile(img.result.id);
-      }
-
-      URL.revokeObjectURL(img.preview);
-    });
-
-    setImages([]);
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const doneCount = images.filter((img) => img.status === "done").length;
-  const pendingCount = images.filter((img) => img.status === "pending").length;
+export default function ConverterTool({ converter }: ConverterToolProps) {
+  const {
+    images,
+    format,
+    setFormat,
+    quality,
+    setQuality,
+    isDragging,
+    setIsDragging,
+    isConverting,
+    fileInputRef,
+    addFiles,
+    removeImage,
+    handleConvert,
+    handleDownloadAll,
+    clearAll,
+    formatFileSize,
+    doneCount,
+    pendingCount,
+  } = converter;
 
   return (
     <section id="convert" className="relative py-16 sm:py-24 md:py-32">
@@ -201,22 +85,23 @@ export default function ConverterTool() {
                   border: "1px solid var(--border-light)",
                 }}
               >
-                {(["webp", "avif"] as const).map((f) => (
+                {(["webp", "avif"] as const).map((value) => (
                   <button
-                    key={f}
-                    onClick={() => setFormat(f)}
+                    key={value}
+                    onClick={() => setFormat(value)}
                     className="flex-1 sm:flex-none px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer border-none"
                     style={{
                       background:
-                        format === f
+                        format === value
                           ? "var(--gradient-button)"
                           : "transparent",
-                      color: format === f ? "#fff" : "var(--text-secondary)",
+                      color:
+                        format === value ? "#fff" : "var(--text-secondary)",
                       boxShadow:
-                        format === f ? "var(--shadow-button)" : "none",
+                        format === value ? "var(--shadow-button)" : "none",
                     }}
                   >
-                    {f.toUpperCase()}
+                    {value.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -319,15 +204,13 @@ export default function ConverterTool() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".png,.jpg,.jpeg,.bmp,.gif,.tiff,.tif,.webp"
+                accept={ACCEPTED_IMAGE_TYPES}
                 className="hidden"
                 onChange={(e) => e.target.files && addFiles(e.target.files)}
               />
               <div
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-3 sm:mb-4"
-                style={{
-                  background: "var(--gradient-subtle)",
-                }}
+                style={{ background: "var(--gradient-subtle)" }}
               >
                 <CloudArrowUp
                   size={28}
@@ -339,14 +222,14 @@ export default function ConverterTool() {
                 className="font-semibold text-sm sm:text-base mb-1"
                 style={{ color: "var(--foreground)" }}
               >
-                Drop images here or{" "}
-                <span className="gradient-text">browse</span>
+                Drop images here or <span className="gradient-text">browse</span>
               </p>
               <p
                 className="text-xs sm:text-sm"
                 style={{ color: "var(--text-tertiary)" }}
               >
-                PNG, JPG, GIF, BMP, TIFF - processed locally in your browser
+                {SUPPORTED_INPUT_FORMATS.join(", ")} - processed locally in your
+                browser
               </p>
             </motion.div>
           )}
@@ -377,7 +260,7 @@ export default function ConverterTool() {
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".png,.jpg,.jpeg,.bmp,.gif,.tiff,.tif,.webp"
+                  accept={ACCEPTED_IMAGE_TYPES}
                   className="hidden"
                   onChange={(e) => e.target.files && addFiles(e.target.files)}
                 />
@@ -398,7 +281,7 @@ export default function ConverterTool() {
                 <AnimatePresence mode="popLayout">
                   {images.map((img, index) => (
                     <motion.div
-                      key={`${img.file.name}-${index}`}
+                      key={img.id}
                       layout
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
